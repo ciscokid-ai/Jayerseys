@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JerseyOrders">
+<meta name="theme-color" content="#3B6D11">
+<title>JerseyOrders</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/tabler-icons.min.css">
+<style>
+  :root {
+    --green: #3B6D11;
+    --green-dark: #27500A;
+    --green-light: #EAF3DE;
+    --green-mid: #C0DD97;
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a1a;
+    --text-2: #555;
+    --text-3: #999;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 99px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111;
+      --surface: #1e1e1e;
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.20);
+      --text: #f0f0f0;
+      --text-2: #aaa;
+      --text-3: #666;
+      --green-light: #1a2e0a;
+      --green-mid: #2a4d0f;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+  body { padding-top: var(--safe-top); }
+
+  /* TOP BAR */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 100;
+  }
+  .topbar-title { font-size: 17px; font-weight: 600; }
+  .topbar-title i { color: var(--green); margin-right: 6px; }
+
+  /* TABS */
+  .tabs {
+    position: fixed; top: calc(var(--safe-top) + 49px); left: 0; right: 0;
+    background: var(--surface); border-bottom: 0.5px solid var(--border);
+    display: flex; z-index: 99;
+  }
+  .tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 13px; cursor: pointer; color: var(--text-2); border-bottom: 2px solid transparent; transition: color .15s; -webkit-tap-highlight-color: transparent; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+
+  /* CONTENT */
+  .content { padding-top: calc(var(--safe-top) + 49px + 44px); padding-bottom: calc(var(--safe-bottom) + 80px); }
+  .section { display: none; padding: 12px 16px; }
+  .section.active { display: block; }
+
+  /* FILTER CHIPS */
+  .filter-row { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px 4px; scrollbar-width: none; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .chip { white-space: nowrap; padding: 6px 14px; border-radius: var(--radius-pill); border: 0.5px solid var(--border-strong); font-size: 13px; cursor: pointer; background: transparent; color: var(--text-2); font-family: inherit; }
+  .chip.active { background: var(--green-light); color: var(--green-dark); border-color: var(--green); font-weight: 600; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 13px 15px; margin-bottom: 10px; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .order-num { font-size: 14px; font-weight: 600; }
+  .order-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+  /* BADGES */
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-pill); white-space: nowrap; }
+  .badge-new { background: #EAF3DE; color: #27500A; }
+  .badge-ordered { background: #E6F1FB; color: #0C447C; }
+  .badge-paid { background: #FAEEDA; color: #633806; }
+  .badge-shipped { background: #EAF3DE; color: #3B6D11; }
+  .badge-done { background: #f0f0f0; color: #555; }
+  @media (prefers-color-scheme: dark) {
+    .badge-new { background: #1a2e0a; color: #97C459; }
+    .badge-ordered { background: #0d2340; color: #85B7EB; }
+    .badge-paid { background: #2a1e05; color: #FAC775; }
+    .badge-shipped { background: #1a2e0a; color: #97C459; }
+    .badge-done { background: #2a2a2a; color: #888; }
+  }
+
+  /* META ROW */
+  .meta-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 7px; font-size: 12px; color: var(--text-3); }
+  .meta-row i { vertical-align: -1px; }
+
+  /* FIN ROWS */
+  .divider { height: 0.5px; background: var(--border); margin: 10px 0; }
+  .fin-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+  .fin-row .label { color: var(--text-2); }
+  .profit-pos { color: #3B6D11; font-weight: 600; }
+  .profit-neg { color: #A32D2D; font-weight: 600; }
+
+  /* ACTION ROW */
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; font-size: 13px; color: var(--text); font-family: inherit; -webkit-tap-highlight-color: transparent; }
+  .btn:active { opacity: .7; }
+  .btn-primary { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+  .btn-primary:active { background: var(--green-dark); }
+  .btn-sm { padding: 6px 11px; font-size: 12px; }
+  .btn-danger { color: #A32D2D; }
+  .btn-block { width: 100%; justify-content: center; margin-top: 8px; }
+
+  /* FAB */
+  .fab { position: fixed; bottom: calc(var(--safe-bottom) + 24px); right: 20px; background: var(--green); color: #fff; width: 54px; height: 54px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; box-shadow: 0 3px 12px rgba(0,0,0,0.25); }
+
+  /* SHEET MODAL */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: none; }
+  .sheet-bg.open { display: block; }
+  .sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-radius: 20px 20px 0 0; max-height: 92vh; overflow-y: auto; z-index: 201; transform: translateY(100%); transition: transform .25s ease; padding: 0 16px calc(var(--safe-bottom) + 24px); }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 12px auto 4px; }
+  .sheet-title { font-size: 17px; font-weight: 600; padding: 12px 0 16px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* FORM */
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 12px; color: var(--text-2); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .03em; }
+  .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 15px; background: var(--bg); color: var(--text); font-family: inherit; -webkit-appearance: none; }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .section-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin: 18px 0 10px; }
+
+  /* METRICS */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--surface); border-radius: var(--radius-sm); padding: 13px; border: 0.5px solid var(--border); }
+  .metric-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+  .metric-val { font-size: 22px; font-weight: 700; }
+  .metric-val.green { color: var(--green); }
+  .month-hdr { font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin: 20px 0 8px; }
+
+  /* MESSAGE BOX */
+  .msg-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; border: 0.5px solid var(--border); }
+  .msg-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px; }
+  .msg-text { font-size: 13px; line-height: 1.55; white-space: pre-wrap; color: var(--text); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
+  .empty i { font-size: 40px; display: block; margin-bottom: 12px; }
+
+  /* PRINT */
+  @media print {
+    body * { display: none !important; }
+    .print-area, .print-area * { display: block !important; }
+    .print-area { font-family: Arial, sans-serif; padding: 8mm; width: 148mm; }
+    .pl-to { font-size: 11pt; color: #555; margin-bottom: 4mm; }
+    .pl-name { font-size: 14pt; font-weight: bold; margin-bottom: 2mm; }
+    .pl-addr { font-size: 11pt; line-height: 1.6; margin-bottom: 6mm; }
+    .pl-bar { border: 1pt solid #aaa; height: 14mm; display: flex; align-items: center; justify-content: center; font-size: 28pt; letter-spacing: 3px; margin: 4mm 0; }
+    .pl-order { font-size: 9pt; color: #666; margin-top: 3mm; }
+    .pl-carrier { margin-top: 5mm; padding-top: 3mm; border-top: 1pt solid #000; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; color: #444; display: flex; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title"><i class="ti ti-shirt"></i> JerseyOrders</span>
+  <button class="btn btn-sm btn-primary" onclick="openSheet('new')"><i class="ti ti-plus"></i> Nieuw</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('orders')"><i class="ti ti-package"></i> Bestellingen</div>
+  <div class="tab" onclick="showTab('finance')"><i class="ti ti-chart-bar"></i> Financiën</div>
+</div>
+
+<div class="content">
+  <div id="tab-orders" class="section active">
+    <div class="filter-row" id="filterRow"></div>
+    <div id="orderList" style="padding:0 16px"></div>
+  </div>
+  <div id="tab-finance" class="section">
+    <div id="financeView"></div>
+  </div>
+</div>
+
+<button class="fab" onclick="openSheet('new')" aria-label="Nieuwe bestelling"><i class="ti ti-plus"></i></button>
+
+<div class="sheet-bg" id="sheetBg" onclick="closeBgClick(event)"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheetContent"></div>
+</div>
+
+<div class="print-area" id="printArea" style="display:none"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────
+let orders = JSON.parse(localStorage.getItem('jersey_orders') || '[]');
+let currentFilter = 'alle';
+let editId = null;
+
+function save() { localStorage.setItem('jersey_orders', JSON.stringify(orders)); }
+function genId() { return 'ORD-' + Date.now().toString(36).toUpperCase().slice(-5); }
+
+const STATUS_LABELS = { new: 'Nieuw', ordered: 'Besteld', paid: 'Betaald', shipped: 'Verzonden', done: 'Afgerond' };
+const STATUS_BADGES = { new: 'badge-new', ordered: 'badge-ordered', paid: 'badge-paid', shipped: 'badge-shipped', done: 'badge-done' };
+
+// ─── TABS ────────────────────────────────────────────
+function showTab(t) {
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['orders','finance'][i] === t));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  if (t === 'finance') renderFinance();
+}
+
+// ─── RENDER ORDERS ───────────────────────────────────
+function renderFilters() {
+  const counts = { alle: orders.length };
+  orders.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
+  const chips = [
+    { k: 'alle', l: 'Alle' }, { k: 'new', l: 'Nieuw' }, { k: 'ordered', l: 'Besteld' },
+    { k: 'paid', l: 'Betaald' }, { k: 'shipped', l: 'Verzonden' }, { k: 'done', l: 'Afgerond' }
+  ];
+  document.getElementById('filterRow').innerHTML = chips
+    .map(c => `<button class="chip${currentFilter === c.k ? ' active' : ''}" onclick="setFilter('${c.k}')">${c.l}${counts[c.k] ? ' (' + counts[c.k] + ')' : ''}</button>`)
+    .join('');
+}
+
+function setFilter(f) { currentFilter = f; renderFilters(); renderOrderList(); }
+
+function renderOrders() { renderFilters(); renderOrderList(); }
+
+function renderOrderList() {
+  const list = document.getElementById('orderList');
+  const filtered = orders
+    .filter(o => currentFilter === 'alle' || o.status === currentFilter)
+    .sort((a, b) => b.created - a.created);
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty"><i class="ti ti-package"></i>Geen bestellingen gevonden</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(o => {
+    const w = (o.omzet || 0) - (o.kosten || 0);
+    return `<div class="card">
+      <div class="card-header">
+        <div>
+          <div class="order-num">${o.id}</div>
+          <div class="order-sub">${o.klant || '—'} · ${o.artikel || '—'}</div>
+        </div>
+        <span class="badge ${STATUS_BADGES[o.status]}">${STATUS_LABELS[o.status]}</span>
+      </div>
+      <div class="meta-row">
+        <span><i class="ti ti-calendar"></i> ${new Date(o.created).toLocaleDateString('nl-NL')}</span>
+        ${o.tracking ? `<span><i class="ti ti-truck"></i> ${o.tracking}</span>` : ''}
+        ${o.omzet ? `<span><i class="ti ti-coin-euro"></i> €${(+o.omzet).toFixed(2)}</span>` : ''}
+      </div>
+      ${(o.omzet || o.kosten) ? `
+      <div class="divider"></div>
+      <div class="fin-row"><span class="label">Omzet</span><span>€${(+o.omzet || 0).toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Kosten</span><span>€${(+o.kosten || 0).toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>` : ''}
+      <div class="action-row">
+        <button class="btn btn-sm" onclick="openSheet('view','${o.id}')"><i class="ti ti-eye"></i> Details</button>
+        <button class="btn btn-sm" onclick="openSheet('edit','${o.id}')"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm" onclick="printLabel('${o.id}')"><i class="ti ti-printer"></i> Label</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── FINANCE ─────────────────────────────────────────
+function renderFinance() {
+  const view = document.getElementById('financeView');
+  if (!orders.length) { view.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Nog geen bestellingen</div>'; return; }
+
+  const byMonth = {};
+  orders.forEach(o => {
+    const d = new Date(o.created);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!byMonth[k]) byMonth[k] = { omzet: 0, kosten: 0, orders: 0 };
+    byMonth[k].omzet += (+o.omzet || 0);
+    byMonth[k].kosten += (+o.kosten || 0);
+    byMonth[k].orders++;
+  });
+
+  const tot = { omzet: orders.reduce((s, o) => s + (+o.omzet || 0), 0), kosten: orders.reduce((s, o) => s + (+o.kosten || 0), 0) };
+  const totW = tot.omzet - tot.kosten;
+
+  let html = `<div class="metric-grid">
+    <div class="metric"><div class="metric-label">Totale omzet</div><div class="metric-val">€${tot.omzet.toFixed(2)}</div></div>
+    <div class="metric"><div class="metric-label">Totale kosten</div><div class="metric-val">€${tot.kosten.toFixed(2)}</div></div>
+    <div class="metric"><div class="metric-label">Totale winst</div><div class="metric-val ${totW >= 0 ? 'green' : ''}">€${totW.toFixed(2)}</div></div>
+    <div class="metric"><div class="metric-label">Bestellingen</div><div class="metric-val">${orders.length}</div></div>
+  </div>`;
+
+  Object.keys(byMonth).sort().reverse().forEach(m => {
+    const data = byMonth[m];
+    const w = data.omzet - data.kosten;
+    const [yr, mo] = m.split('-');
+    const naam = new Date(+yr, +mo - 1, 1).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+    html += `<div class="month-hdr">${naam}</div>
+    <div class="card">
+      <div class="fin-row"><span class="label">Omzet</span><span>€${data.omzet.toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Kosten</span><span>€${data.kosten.toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label" style="color:var(--text-3)">Bestellingen</span><span style="color:var(--text-3)">${data.orders}</span></div>
+    </div>`;
+  });
+
+  view.innerHTML = html;
+}
+
+// ─── SHEET ───────────────────────────────────────────
+function openSheet(mode, id) {
+  editId = id || null;
+  const o = id ? orders.find(x => x.id === id) : null;
+  const content = document.getElementById('sheetContent');
+
+  if (mode === 'new' || mode === 'edit') {
+    content.innerHTML = `
+    <div class="sheet-title">${mode === 'new' ? 'Nieuwe bestelling' : 'Bewerk ' + o.id}
+      <button class="btn btn-sm" onclick="closeSheet()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="section-label">Klant & artikel</div>
+    <div class="field"><label>Klantnaam / Snapchat</label><input id="f-klant" value="${esc(o?.klant)}" placeholder="@snapchatnaam"></div>
+    <div class="field"><label>Artikel</label><input id="f-artikel" value="${esc(o?.artikel)}" placeholder="bijv. Real Madrid thuis jersey #7 maat L"></div>
+    <div class="field"><label>Extra info (kleur, maat, variatie)</label><textarea id="f-extra">${esc(o?.extra)}</textarea></div>
+
+    <div class="section-label">Afleveradres</div>
+    <div class="field"><label>Naam ontvanger</label><input id="f-naam" value="${esc(o?.naam)}" placeholder="Volledige naam"></div>
+    <div class="field"><label>Straat + huisnummer</label><input id="f-straat" value="${esc(o?.straat)}" placeholder="Keizersgracht 123"></div>
+    <div class="row2">
+      <div class="field"><label>Postcode</label><input id="f-pc" value="${esc(o?.pc)}" placeholder="1234 AB"></div>
+      <div class="field"><label>Stad</label><input id="f-stad" value="${esc(o?.stad)}" placeholder="Amsterdam"></div>
+    </div>
+    <div class="field"><label>Land</label><input id="f-land" value="${esc(o?.land) || 'Nederland'}" placeholder="Nederland"></div>
+
+    <div class="section-label">Financiën</div>
+    <div class="row2">
+      <div class="field"><label>Omzet (€)</label><input id="f-omzet" type="number" step="0.01" inputmode="decimal" value="${o?.omzet || ''}" placeholder="0.00"></div>
+      <div class="field"><label>Kosten (€)</label><input id="f-kosten" type="number" step="0.01" inputmode="decimal" value="${o?.kosten || ''}" placeholder="0.00"></div>
+    </div>
+
+    <div class="section-label">Status & tracking</div>
+    <div class="field"><label>Status</label>
+      <select id="f-status">
+        ${['new','ordered','paid','shipped','done'].map(s =>
+          `<option value="${s}"${(o?.status || 'new') === s ? ' selected' : ''}>${STATUS_LABELS[s]}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="field"><label>Ordernummer leverancier</label><input id="f-ordnr" value="${esc(o?.ordnr)}" placeholder="Referentie van de leverancier"></div>
+    <div class="field"><label>Trackingnummer PostNL</label><input id="f-tracking" value="${esc(o?.tracking)}" placeholder="3SXXXXX..."></div>
+    <div class="field"><label>Notitie</label><textarea id="f-note">${esc(o?.note)}</textarea></div>
+
+    <button class="btn btn-primary btn-block" onclick="saveOrder()">
+      <i class="ti ti-check"></i> ${mode === 'new' ? 'Bestelling aanmaken' : 'Wijzigingen opslaan'}
+    </button>`;
+
+  } else if (mode === 'view') {
+    const w = (o.omzet || 0) - (o.kosten || 0);
+    const msgs = buildMessages(o);
+    content.innerHTML = `
+    <div class="sheet-title">${o.id}
+      <button class="btn btn-sm" onclick="closeSheet()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="fin-row"><span class="label">Klant</span><span>${esc(o.klant) || '—'}</span></div>
+      <div class="fin-row"><span class="label">Artikel</span><span style="text-align:right;max-width:55%">${esc(o.artikel) || '—'}</span></div>
+      ${o.extra ? `<div class="fin-row"><span class="label">Info</span><span style="text-align:right;max-width:55%">${esc(o.extra)}</span></div>` : ''}
+      <div class="divider"></div>
+      <div class="fin-row"><span class="label">Ontvanger</span><span>${esc(o.naam) || '—'}</span></div>
+      <div class="fin-row"><span class="label">Adres</span><span style="text-align:right;max-width:55%;font-size:12px">${[o.straat, o.pc, o.stad, o.land].filter(Boolean).join(', ') || '—'}</span></div>
+      <div class="divider"></div>
+      <div class="fin-row"><span class="label">Status</span><span><span class="badge ${STATUS_BADGES[o.status]}">${STATUS_LABELS[o.status]}</span></span></div>
+      ${o.ordnr ? `<div class="fin-row"><span class="label">Ordernr. leverancier</span><span>${esc(o.ordnr)}</span></div>` : ''}
+      ${o.tracking ? `<div class="fin-row"><span class="label">Tracking PostNL</span><span>${esc(o.tracking)}</span></div>` : ''}
+      <div class="divider"></div>
+      <div class="fin-row"><span class="label">Omzet</span><span>€${(+o.omzet || 0).toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Kosten</span><span>€${(+o.kosten || 0).toFixed(2)}</span></div>
+      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>
+    </div>
+
+    <div class="section-label">Klantberichten — tik om te kopiëren</div>
+    ${msgs.map(m => `
+    <div class="msg-box" onclick="copyMsg('${btoa(encodeURIComponent(m.text))}', this)">
+      <div class="msg-label">${m.label}</div>
+      <div class="msg-text">${esc(m.text)}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--green)"><i class="ti ti-copy"></i> Tik om te kopiëren</div>
+    </div>`).join('')}
+
+    <div class="action-row" style="margin-top:4px">
+      <button class="btn btn-sm" onclick="openSheet('edit','${o.id}')"><i class="ti ti-edit"></i> Bewerken</button>
+      <button class="btn btn-sm" onclick="printLabel('${o.id}')"><i class="ti ti-printer"></i> Label</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}');closeSheet()"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }
+
+  document.getElementById('sheetBg').classList.add('open');
+  setTimeout(() => document.getElementById('sheet').classList.add('open'), 10);
+}
+
+function closeSheet() {
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheetBg').classList.remove('open');
+}
+function closeBgClick(e) { if (e.target === document.getElementById('sheetBg')) closeSheet(); }
+
+// ─── MESSAGES ────────────────────────────────────────
+function buildMessages(o) {
+  const msgs = [];
+  msgs.push({ label: '✅ Bevestiging bestelling', text: `Hé ${o.klant || ''}!\n\nJe bestelling is ontvangen 🎉\nArtikel: ${o.artikel || '—'}\nOrdernummer: ${o.id}\n\nIk ga dit zo snel mogelijk voor je regelen. Ik laat je weten zodra het onderweg is!` });
+  if (o.ordnr) msgs.push({ label: '📦 Besteld bij leverancier', text: `Hé ${o.klant || ''}!\n\nJe ${o.artikel || 'bestelling'} is besteld bij de leverancier (ref: ${o.ordnr}). Zodra ik het trackingnummer heb stuur ik je door!` });
+  msgs.push({ label: '💸 Betaalverzoek', text: `Hé ${o.klant || ''}!\n\nKun je €${(+o.omzet || 0).toFixed(2)} overmaken? Dan zorg ik dat je bestelling zo snel mogelijk verstuurd wordt. Bedankt! 🙏` });
+  if (o.tracking) msgs.push({ label: '🚀 Verzonden met tracking', text: `Hé ${o.klant || ''}!\n\nJe pakketje is onderweg! 📦\nTrackingnummer: ${o.tracking}\nVolg je pakket: https://postnl.nl/tracktrace/?B=${o.tracking}&P=${(o.pc || '').replace(' ', '')}\n\nVragen? Stuur me een berichtje!` });
+  msgs.push({ label: '⭐ Afgeleverd — vraag om review', text: `Hé ${o.klant || ''}!\n\nJe pakket is bezorgd! Hoop dat je blij bent met je ${o.artikel || 'bestelling'} 🙌 Als je vrienden zoekt voor dezelfde kwaliteit, stuur ze gerust mijn kant op. Thanks!` });
+  return msgs;
+}
+
+function copyMsg(b64, el) {
+  const text = decodeURIComponent(atob(b64));
+  navigator.clipboard.writeText(text).catch(() => {});
+  const btn = el.querySelector('div:last-child');
+  btn.innerHTML = '<i class="ti ti-check"></i> Gekopieerd!';
+  btn.style.color = 'var(--green)';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Tik om te kopiëren'; }, 1800);
+}
+
+// ─── SAVE / DELETE ───────────────────────────────────
+function saveOrder() {
+  const g = id => document.getElementById(id)?.value || '';
+  const o = {
+    id: editId ? orders.find(x => x.id === editId).id : genId(),
+    created: editId ? orders.find(x => x.id === editId).created : Date.now(),
+    klant: g('f-klant'), artikel: g('f-artikel'), extra: g('f-extra'),
+    naam: g('f-naam'), straat: g('f-straat'), pc: g('f-pc'), stad: g('f-stad'), land: g('f-land'),
+    omzet: parseFloat(g('f-omzet')) || 0, kosten: parseFloat(g('f-kosten')) || 0,
+    status: g('f-status'), ordnr: g('f-ordnr'), tracking: g('f-tracking'), note: g('f-note')
+  };
+  if (editId) { const i = orders.findIndex(x => x.id === editId); orders[i] = o; }
+  else orders.unshift(o);
+  save(); renderOrders(); closeSheet();
+}
+
+function deleteOrder(id) {
+  if (!confirm('Bestelling verwijderen?')) return;
+  orders = orders.filter(o => o.id !== id);
+  save(); renderOrders();
+}
+
+// ─── PRINT LABEL ─────────────────────────────────────
+function printLabel(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const pa = document.getElementById('printArea');
+  pa.style.display = 'block';
+  pa.innerHTML = `
+    <div class="pl-to">Aan:</div>
+    <div class="pl-name">${o.naam || '—'}</div>
+    <div class="pl-addr">${o.straat || ''}<br>${o.pc || ''} ${o.stad || ''}<br>${o.land || 'Nederland'}</div>
+    <div class="pl-bar">| | | | | | | | | | | | | |</div>
+    <div class="pl-order">Bestelnummer: ${o.id}${o.tracking ? ' · ' + o.tracking : ''}</div>
+    <div class="pl-carrier"><span>PostNL — Standaard pakket</span><span>${new Date().toLocaleDateString('nl-NL')}</span></div>`;
+  window.print();
+  pa.style.display = 'none';
+}
+
+// ─── UTILS ───────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── SERVICE WORKER ──────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(console.error);
+}
+
+// ─── INIT ────────────────────────────────────────────
+renderOrders();
+</script>
+</body>
+</html>
