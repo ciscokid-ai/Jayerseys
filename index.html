@@ -527,6 +527,9 @@
 <div class="modal-overlay" id="msg-modal" onclick="closeMsgModal(event)">
   <div class="modal">
     <div class="modal-title" id="msg-modal-title">Klantbericht</div>
+    <div id="msg-modal-status-update" style="display:none; background:#0a2a1a; border:1px solid var(--accent); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:var(--accent);">
+      ✅ Status bijgewerkt naar <strong>Verzonden</strong>
+    </div>
     <div class="msg-box" id="msg-modal-body"></div>
     <button class="btn btn-primary" onclick="copyMsg()">📋 Kopiëren</button>
     <button class="btn btn-ghost" style="margin-top:8px; width:100%;" onclick="document.getElementById('msg-modal').classList.remove('open')">Sluiten</button>
@@ -614,7 +617,7 @@ function renderOrders() {
       <div class="order-actions">
         <button class="btn btn-sm btn-ghost" onclick="editOrder('${o.id}')">✏️ Bewerk</button>
         <button class="btn btn-sm btn-ghost" onclick="showBericht('${o.id}')">💬 Bericht</button>
-        <button class="btn btn-sm btn-ghost" onclick="printLabel('${o.id}')">🖨️ Label</button>
+        <button class="btn btn-sm ${o.status === 'Verzonden' || o.status === 'Afgerond' ? 'btn-ghost' : 'btn-warn'}" onclick="verzendFlow('${o.id}')">📦 Verzenden</button>
         <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}')">🗑️</button>
       </div>
     </div>`;
@@ -705,23 +708,104 @@ function deleteOrder(id) {
 }
 
 // ─── BERICHTEN ──────────────────────────────────────────
+
+function buildMsg(o) {
+  const tt = o.tt ? o.tt.trim() : '';
+  const ttLink = tt ? `https://postnl.nl/tracktrace/?B=${tt}&P=` : '';
+  if (o.status === 'Nieuw' || o.status === 'Besteld bij leverancier') {
+    return `Hey ${o.naam}! ✅
+
+Ik heb je bestelling ontvangen:
+👕 ${o.product || 'je shirt'}
+💶 €${(o.omzet||0).toFixed(2)}
+
+Ik bestel dit nu bij mijn leverancier. Levertijd is ongeveer 2–3 weken. Ik laat je weten zodra het onderweg is! 🙌`;
+  } else if (o.status === 'Betaald') {
+    return `Hey ${o.naam}! 💸
+
+Betaling ontvangen, bedankt!
+
+👕 ${o.product || 'je shirt'}
+
+Ik ga het zo snel mogelijk versturen en stuur je daarna een Track & Trace. ⚽`;
+  } else if (o.status === 'Verzonden') {
+    return `Hey ${o.naam}! 📦
+
+Je shirt is onderweg!
+
+👕 ${o.product || 'je shirt'}
+🚚 PostNL Track & Trace: ${tt || '(volgt nog)'}${ttLink ? `
+🔗 ${ttLink}` : ''}
+
+Normaal gesproken 1–2 werkdagen. Laat me weten als je vragen hebt! ⚽🙌`;
+  } else if (o.status === 'Afgerond') {
+    return `Hey ${o.naam}! 🎉
+
+Hopelijk ben je blij met je ${o.product || 'shirt'}!
+
+Wil je nog een keer bestellen? Je weet me te vinden 😄⚽
+Bedankt! 🙏`;
+  }
+  return `Hey ${o.naam}, update over je bestelling bij JAJerseys:
+
+👕 ${o.product || 'je shirt'}
+📋 Status: ${o.status}`;
+}
+
 function showBericht(id) {
   const o = orders.find(x => x.id === id);
   if (!o) return;
-  const winst = (o.omzet||0) - (o.kosten||0);
-  let msg = '';
-  if (o.status === 'Nieuw' || o.status === 'Besteld bij leverancier') {
-    msg = `Hey ${o.naam}! ✅ Ik heb je bestelling ontvangen: ${o.product||'je shirt'}. Ik bestel dit bij mijn leverancier. Levertijd is ongeveer 2-3 weken. Kosten: €${(o.omzet||0).toFixed(2)}. Ik laat je weten zodra het onderweg is! 🙌`;
-  } else if (o.status === 'Betaald') {
-    msg = `Hey ${o.naam}! 💸 Betaling ontvangen, bedankt! Je shirt ${o.product||''} is betaald en wordt zo snel mogelijk verstuurd. Ik stuur je een Track & Trace zodra het verzonden is!`;
-  } else if (o.status === 'Verzonden') {
-    msg = `Hey ${o.naam}! 📦 Je bestelling is onderweg!\n\nProduct: ${o.product||'je shirt'}\nTrack & Trace: ${o.tt || '(volgt)'}\n\nVia PostNL te volgen op postnl.nl. Meestal 1-2 werkdagen. Laat me weten als je vragen hebt! ⚽`;
-  } else if (o.status === 'Afgerond') {
-    msg = `Hey ${o.naam}! 🎉 Hopelijk ben je blij met je ${o.product||'shirt'}! Mocht je nog shirts willen, laat het weten. Bedankt voor je bestelling! 🙏⚽`;
-  }
-  document.getElementById('msg-modal-title').textContent = `Bericht voor ${o.naam}`;
-  document.getElementById('msg-modal-body').textContent = msg;
+  document.getElementById('msg-modal-title').textContent = `💬 Bericht voor ${o.naam}`;
+  document.getElementById('msg-modal-body').textContent = buildMsg(o);
+  document.getElementById('msg-modal-status-update').style.display = 'none';
   document.getElementById('msg-modal').classList.add('open');
+}
+
+// Verzend flow: vraag T&T op, zet status op Verzonden, toon bericht
+function verzendFlow(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+
+  if (o.status === 'Afgerond') {
+    if (!confirm('Deze bestelling is al afgerond. Toch een bericht sturen?')) return;
+    showBericht(id);
+    return;
+  }
+
+  // Als nog geen T&T: vraag ernaar
+  let tt = o.tt ? o.tt.trim() : '';
+  if (!tt) {
+    tt = prompt('Voer de PostNL Track & Trace code in:\n(laat leeg om over te slaan)', '') || '';
+  }
+
+  // Sla T&T op en zet status op Verzonden
+  const idx = orders.findIndex(x => x.id === id);
+  if (idx >= 0) {
+    if (tt) orders[idx].tt = tt;
+    if (orders[idx].status !== 'Verzonden' && orders[idx].status !== 'Afgerond') {
+      orders[idx].status = 'Verzonden';
+    }
+    save();
+  }
+
+  const updated = orders[idx];
+  const ttLink = tt ? `https://postnl.nl/tracktrace/?B=${tt}&P=` : '';
+
+  const msg = `Hey ${updated.naam}! 📦
+
+Je shirt is onderweg!
+
+👕 ${updated.product || 'je shirt'}
+🚚 PostNL Track & Trace: ${tt || '(volgt nog)'}${ttLink ? `
+🔗 ${ttLink}` : ''}
+
+Normaal gesproken 1–2 werkdagen. Laat me weten als je vragen hebt! ⚽🙌`;
+
+  document.getElementById('msg-modal-title').textContent = `📦 Verzonden — ${updated.naam}`;
+  document.getElementById('msg-modal-body').textContent = msg;
+  document.getElementById('msg-modal-status-update').style.display = 'block';
+  document.getElementById('msg-modal').classList.add('open');
+  renderOrders();
 }
 
 function closeMsgModal(e) {
@@ -730,7 +814,12 @@ function closeMsgModal(e) {
 
 function copyMsg() {
   const txt = document.getElementById('msg-modal-body').textContent;
-  navigator.clipboard.writeText(txt).then(() => alert('Gekopieerd!'));
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.querySelector('#msg-modal .btn-primary');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Gekopieerd!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
 }
 
 // ─── LABEL PRINT ────────────────────────────────────────
