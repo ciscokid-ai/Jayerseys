@@ -175,18 +175,25 @@
   .filter-bar input { flex: 1; }
   .filter-bar select { flex: 0 0 auto; width: 130px; }
 
-  /* Label print */
+  /* Label print — PostNL stijl, A6 liggend, Munbyn thermisch */
   @media print {
-    body * { visibility: hidden; }
-    #label-print, #label-print * { visibility: visible; }
+    @page {
+      size: 150mm 102mm landscape;
+      margin: 0;
+    }
+    body * { visibility: hidden !important; }
+    #label-print, #label-print * { visibility: visible !important; }
     #label-print {
-      position: fixed; top: 0; left: 0;
-      width: 105mm; min-height: 148mm;
-      padding: 8mm;
-      font-family: Arial, sans-serif;
-      font-size: 12pt;
-      color: #000;
-      background: #fff;
+      position: fixed !important;
+      top: 0 !important; left: 0 !important;
+      width: 150mm !important;
+      height: 102mm !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #fff !important;
+      color: #000 !important;
+      font-family: Arial, Helvetica, sans-serif !important;
+      overflow: hidden !important;
     }
   }
 
@@ -727,25 +734,161 @@ function copyMsg() {
 }
 
 // ─── LABEL PRINT ────────────────────────────────────────
+
+// Code 128B barcode SVG generator
+function makeBarcodeSVG(text) {
+  // Code 128B bar patterns (bar/space widths, 6 values per char)
+  const C128B = {
+    ' ':[2,1,2,2,2,2],'!':[2,2,2,1,2,2],'"':[2,2,2,2,2,1],'#':[1,2,1,2,2,3],
+    '$':[1,2,1,3,2,2],'%':[1,3,1,2,2,2],'&':[1,2,2,2,1,3],"'":[1,2,2,3,1,2],
+    '(':[1,3,2,2,1,2],')':[2,2,1,2,1,3],'*':[2,2,1,3,1,2],'+':[2,3,1,2,1,2],
+    ',':[1,1,2,2,3,2],'-':[1,2,2,1,3,2],'.':[1,2,2,2,3,1],'/':[1,1,3,2,2,2],
+    '0':[1,2,3,1,2,2],'1':[1,2,3,2,2,1],'2':[2,2,3,2,1,1],'3':[2,2,1,1,3,2],
+    '4':[2,2,1,2,3,1],'5':[2,1,3,2,1,2],'6':[2,2,3,1,1,2],'7':[3,1,2,1,3,1],
+    '8':[3,1,1,2,2,2],'9':[3,2,1,1,2,2],':':[3,2,1,2,2,1],';':[3,1,2,2,1,2],
+    '<':[3,2,2,1,1,2],'=':[3,2,2,2,1,1],'>':[2,1,2,1,2,3],'?':[2,1,2,3,2,1],
+    '@':[2,3,2,1,2,1],'A':[1,1,1,3,2,3],'B':[1,3,1,1,2,3],'C':[1,3,1,3,2,1],
+    'D':[1,1,2,3,1,3],'E':[1,3,2,1,1,3],'F':[1,3,2,3,1,1],'G':[2,1,1,3,1,3],
+    'H':[2,3,1,1,1,3],'I':[2,3,1,3,1,1],'J':[1,1,2,1,3,3],'K':[1,1,2,3,3,1],
+    'L':[1,3,2,1,3,1],'M':[1,1,3,1,2,3],'N':[1,1,3,3,2,1],'O':[1,3,3,1,2,1],
+    'P':[3,1,3,1,2,1],'Q':[2,1,1,3,3,1],'R':[2,3,1,1,3,1],'S':[2,1,3,1,1,3],
+    'T':[2,1,3,3,1,1],'U':[2,1,3,1,3,1],'V':[3,1,1,1,2,3],'W':[3,1,1,3,2,1],
+    'X':[3,3,1,1,2,1],'Y':[3,1,2,1,1,3],'Z':[3,1,2,3,1,1],'[':[3,3,2,1,1,1],
+    '\\':[3,1,4,1,1,1],']':[2,2,1,4,1,1],'^':[4,3,1,1,1,1],'_':[1,1,1,2,2,4],
+    'a':[1,1,1,4,2,2],'b':[1,2,1,1,2,4],'c':[1,2,1,4,2,1],'d':[1,4,1,1,2,2],
+    'e':[1,4,1,2,2,1],'f':[1,1,2,2,1,4],'g':[1,1,2,4,1,2],'h':[1,2,2,1,1,4],
+    'i':[1,2,2,4,1,1],'j':[1,4,2,1,1,2],'k':[1,4,2,2,1,1],'l':[2,4,1,2,1,1],
+    'm':[2,2,1,1,1,4],'n':[4,1,3,1,1,1],'o':[2,4,1,1,1,2],'p':[1,3,4,1,1,1],
+    'q':[1,1,1,2,4,2],'r':[1,2,1,1,4,2],'s':[1,2,1,2,4,1],'t':[1,1,4,2,1,2],
+    'u':[1,2,4,1,1,2],'v':[1,2,4,2,1,1],'w':[4,1,1,2,1,2],'x':[4,2,1,1,1,2],
+    'y':[4,2,1,2,1,1],'z':[2,1,2,1,4,1]
+  };
+  const START_B = [2,1,1,4,1,2];
+  const STOP    = [2,3,3,1,1,1,2];
+  const bw = 2; // bar width multiplier (px)
+
+  function charPattern(c) {
+    // Fallback for unmapped chars: use a simple alternating pattern
+    return C128B[c] || [1,2,1,2,1,2];
+  }
+
+  // Build patterns array
+  const chars = text.split('');
+  const patterns = [START_B, ...chars.map(charPattern), STOP];
+
+  let svgBars = '';
+  let x = bw * 5; // left quiet zone
+  patterns.forEach(pat => {
+    pat.forEach((w, i) => {
+      if (i % 2 === 0) {
+        svgBars += `<rect x="${x}" y="0" width="${w*bw}" height="40"/>`;
+      }
+      x += w * bw;
+    });
+  });
+  x += bw * 5; // right quiet zone
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${x}" height="40" viewBox="0 0 ${x} 40" preserveAspectRatio="none" style="width:100%;height:100%;display:block;"><g fill="#000">${svgBars}</g></svg>`;
+}
+
 function printLabel(id) {
   const o = orders.find(x => x.id === id);
   if (!o) return;
+  if (!o.adres) { alert('Geen adres ingevuld bij deze bestelling.'); return; }
+
+  const ref = o.id.slice(-8).toUpperCase();
+  const hasTT = o.tt && o.tt.trim().length > 0;
+  const barcodeCode = hasTT ? o.tt.trim() : ref;
+  const barcodeLabel = hasTT ? o.tt.trim() : '#' + ref;
+  const adresRegels = (o.adres||'').split(/\n|,/).map(r => r.trim()).filter(Boolean);
+  const barcodeSVG = makeBarcodeSVG(barcodeCode);
+
   const lbl = document.getElementById('label-print');
   lbl.style.display = 'block';
   lbl.innerHTML = `
-    <div style="font-size:11pt;font-family:Arial,sans-serif;color:#000;">
-      <div style="font-size:9pt;color:#555;margin-bottom:4px;">VAN: Shirt Orders NL</div>
-      <hr style="margin:6px 0;">
-      <div style="font-size:12pt;font-weight:bold;margin-bottom:6px;">NAAR:</div>
-      <div style="font-size:13pt;font-weight:bold;">${o.naam}</div>
-      <div style="white-space:pre-wrap;font-size:11pt;margin-top:4px;">${o.adres||'—'}</div>
-      <hr style="margin:10px 0;">
-      <div style="font-size:9pt;color:#555;">Product: ${o.product||'—'}</div>
-      ${o.tt ? `<div style="font-size:9pt;color:#555;">T&T: ${o.tt}</div>` : ''}
-      <div style="font-size:9pt;color:#555;">Ref: #${o.id.slice(-6).toUpperCase()}</div>
-    </div>`;
-  window.print();
-  setTimeout(() => { lbl.style.display = 'none'; }, 1000);
+  <div style="
+    width:150mm; height:102mm;
+    display:flex; flex-direction:column;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#000; background:#fff;
+    box-sizing:border-box;
+    border:1px solid #000;
+    overflow:hidden;
+  ">
+    <!-- HEADER -->
+    <div style="
+      background:#ff6200; color:#fff;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:2.5mm 5mm; flex-shrink:0;
+    ">
+      <div style="font-size:16pt; font-weight:900; letter-spacing:-0.5px; font-family:Arial,sans-serif;">PostNL</div>
+      <div style="font-size:7pt; text-align:right; line-height:1.4;">
+        <div style="font-weight:700;">PAKKET</div>
+        <div>Standaard</div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div style="display:flex; flex:1; overflow:hidden; min-height:0;">
+
+      <!-- LINKS: afzender + referentie -->
+      <div style="
+        width:40mm; flex-shrink:0;
+        border-right:1px solid #bbb;
+        padding:3mm 3.5mm;
+        display:flex; flex-direction:column; justify-content:space-between;
+        font-size:7.5pt; line-height:1.5;
+      ">
+        <div>
+          <div style="font-size:5.5pt; color:#888; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:1mm;">Afzender</div>
+          <div style="font-weight:900; font-size:9pt; line-height:1.2;">JAJerseys</div>
+          <div style="font-size:7pt; color:#444;">Nederland</div>
+        </div>
+        <div>
+          <div style="font-size:5.5pt; color:#888; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:1mm;">Referentie</div>
+          <div style="font-weight:700; font-size:8pt; font-family:'Courier New',monospace; word-break:break-all;">#${ref}</div>
+        </div>
+      </div>
+
+      <!-- RECHTS: ontvanger + barcode -->
+      <div style="flex:1; padding:3mm 4mm; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; min-width:0;">
+
+        <!-- Ontvanger -->
+        <div>
+          <div style="font-size:5.5pt; color:#888; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:1.5mm;">Bezorgen aan</div>
+          <div style="font-size:12.5pt; font-weight:900; line-height:1.2; margin-bottom:1mm;">${esc(o.naam)}</div>
+          ${adresRegels.map((r,i) => `<div style="font-size:${i===0?'9.5':'8.5'}pt; font-weight:${i===0?'700':'400'}; line-height:1.4;">${esc(r)}</div>`).join('')}
+          <div style="font-size:8pt; font-weight:700; margin-top:1mm; letter-spacing:0.5px;">NEDERLAND</div>
+        </div>
+
+        <!-- Barcode -->
+        <div style="margin-top:auto; padding-top:2mm;">
+          <div style="height:13mm; width:100%; overflow:hidden;">
+            ${barcodeSVG}
+          </div>
+          <div style="font-size:6pt; font-family:'Courier New',monospace; text-align:center; letter-spacing:1.5px; margin-top:1mm; color:#000;">
+            ${barcodeLabel}
+          </div>
+          ${hasTT ? '' : '<div style="font-size:5pt;color:#aaa;text-align:center;">referentie (geen T&T ingevuld)</div>'}
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="
+      border-top:1px solid #ccc;
+      padding:1.5mm 5mm;
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:5.5pt; color:#888; flex-shrink:0;
+    ">
+      <div>postnl.nl</div>
+      <div>Niet frankeren — Verzendlabel</div>
+      <div>${new Date().toLocaleDateString('nl-NL')}</div>
+    </div>
+  </div>`;
+
+  setTimeout(() => window.print(), 150);
+  setTimeout(() => { lbl.style.display = 'none'; }, 3000);
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────
