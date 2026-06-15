@@ -2,496 +2,891 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JerseyOrders">
-<meta name="theme-color" content="#3B6D11">
-<title>JerseyOrders</title>
+<meta name="apple-mobile-web-app-title" content="Shirt Orders">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/tabler-icons.min.css">
+<title>Shirt Orders</title>
 <style>
   :root {
-    --green: #3B6D11;
-    --green-dark: #27500A;
-    --green-light: #EAF3DE;
-    --green-mid: #C0DD97;
-    --bg: #f5f5f5;
-    --surface: #ffffff;
-    --border: rgba(0,0,0,0.10);
-    --border-strong: rgba(0,0,0,0.18);
-    --text: #1a1a1a;
-    --text-2: #555;
-    --text-3: #999;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --radius-pill: 99px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --accent: #00c896;
+    --accent2: #ff6b35;
+    --text: #e8eaf0;
+    --text-muted: #7a7f9a;
+    --border: #2e3248;
+    --danger: #e05252;
+    --warning: #f0a500;
+    --success: #00c896;
+    --radius: 10px;
+    --font: 'Inter', system-ui, sans-serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #111;
-      --surface: #1e1e1e;
-      --border: rgba(255,255,255,0.10);
-      --border-strong: rgba(255,255,255,0.20);
-      --text: #f0f0f0;
-      --text-2: #aaa;
-      --text-3: #666;
-      --green-light: #1a2e0a;
-      --green-mid: #2a4d0f;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding-bottom: 80px;
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
-  body { padding-top: var(--safe-top); }
-
-  /* TOP BAR */
-  .topbar {
-    position: fixed; top: 0; left: 0; right: 0;
-    padding: calc(var(--safe-top) + 12px) 16px 12px;
+  header {
     background: var(--surface);
-    border-bottom: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 0;
+    position: sticky;
+    top: 0;
     z-index: 100;
   }
-  .topbar-title { font-size: 17px; font-weight: 600; }
-  .topbar-title i { color: var(--green); margin-right: 6px; }
-
-  /* TABS */
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.3px;
+    margin-bottom: 14px;
+  }
   .tabs {
-    position: fixed; top: calc(var(--safe-top) + 49px); left: 0; right: 0;
-    background: var(--surface); border-bottom: 0.5px solid var(--border);
-    display: flex; z-index: 99;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
-  .tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 13px; cursor: pointer; color: var(--text-2); border-bottom: 2px solid transparent; transition: color .15s; -webkit-tap-highlight-color: transparent; }
-  .tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--bg);
+    color: var(--accent);
+  }
+  .page { display: none; padding: 20px; }
+  .page.active { display: block; }
 
-  /* CONTENT */
-  .content { padding-top: calc(var(--safe-top) + 49px + 44px); padding-bottom: calc(var(--safe-bottom) + 80px); }
-  .section { display: none; padding: 12px 16px; }
-  .section.active { display: block; }
-
-  /* FILTER CHIPS */
-  .filter-row { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px 4px; scrollbar-width: none; }
-  .filter-row::-webkit-scrollbar { display: none; }
-  .chip { white-space: nowrap; padding: 6px 14px; border-radius: var(--radius-pill); border: 0.5px solid var(--border-strong); font-size: 13px; cursor: pointer; background: transparent; color: var(--text-2); font-family: inherit; }
-  .chip.active { background: var(--green-light); color: var(--green-dark); border-color: var(--green); font-weight: 600; }
-
-  /* CARDS */
-  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 13px 15px; margin-bottom: 10px; }
-  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-  .order-num { font-size: 14px; font-weight: 600; }
-  .order-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
-
-  /* BADGES */
-  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: var(--radius-pill); white-space: nowrap; }
-  .badge-new { background: #EAF3DE; color: #27500A; }
-  .badge-ordered { background: #E6F1FB; color: #0C447C; }
-  .badge-paid { background: #FAEEDA; color: #633806; }
-  .badge-shipped { background: #EAF3DE; color: #3B6D11; }
-  .badge-done { background: #f0f0f0; color: #555; }
-  @media (prefers-color-scheme: dark) {
-    .badge-new { background: #1a2e0a; color: #97C459; }
-    .badge-ordered { background: #0d2340; color: #85B7EB; }
-    .badge-paid { background: #2a1e05; color: #FAC775; }
-    .badge-shipped { background: #1a2e0a; color: #97C459; }
-    .badge-done { background: #2a2a2a; color: #888; }
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .stat-box .val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-box .lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
   }
 
-  /* META ROW */
-  .meta-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 7px; font-size: 12px; color: var(--text-3); }
-  .meta-row i { vertical-align: -1px; }
-
-  /* FIN ROWS */
-  .divider { height: 0.5px; background: var(--border); margin: 10px 0; }
-  .fin-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
-  .fin-row .label { color: var(--text-2); }
-  .profit-pos { color: #3B6D11; font-weight: 600; }
-  .profit-neg { color: #A32D2D; font-weight: 600; }
-
-  /* ACTION ROW */
-  .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
-
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: transparent; cursor: pointer; font-size: 13px; color: var(--text); font-family: inherit; -webkit-tap-highlight-color: transparent; }
-  .btn:active { opacity: .7; }
-  .btn-primary { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
-  .btn-primary:active { background: var(--green-dark); }
-  .btn-sm { padding: 6px 11px; font-size: 12px; }
-  .btn-danger { color: #A32D2D; }
-  .btn-block { width: 100%; justify-content: center; margin-top: 8px; }
-
-  /* FAB */
-  .fab { position: fixed; bottom: calc(var(--safe-bottom) + 24px); right: 20px; background: var(--green); color: #fff; width: 54px; height: 54px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; box-shadow: 0 3px 12px rgba(0,0,0,0.25); }
-
-  /* SHEET MODAL */
-  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: none; }
-  .sheet-bg.open { display: block; }
-  .sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-radius: 20px 20px 0 0; max-height: 92vh; overflow-y: auto; z-index: 201; transform: translateY(100%); transition: transform .25s ease; padding: 0 16px calc(var(--safe-bottom) + 24px); }
-  .sheet.open { transform: translateY(0); }
-  .sheet-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 12px auto 4px; }
-  .sheet-title { font-size: 17px; font-weight: 600; padding: 12px 0 16px; display: flex; justify-content: space-between; align-items: center; }
-
-  /* FORM */
-  .field { margin-bottom: 13px; }
-  .field label { display: block; font-size: 12px; color: var(--text-2); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .03em; }
-  .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 15px; background: var(--bg); color: var(--text); font-family: inherit; -webkit-appearance: none; }
-  .field textarea { resize: vertical; min-height: 70px; }
+  /* Forms */
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--font);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; min-height: 70px; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .section-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin: 18px 0 10px; }
 
-  /* METRICS */
-  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .metric { background: var(--surface); border-radius: var(--radius-sm); padding: 13px; border: 0.5px solid var(--border); }
-  .metric-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
-  .metric-val { font-size: 22px; font-weight: 700; }
-  .metric-val.green { color: var(--green); }
-  .month-hdr { font-size: 12px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin: 20px 0 8px; }
+  /* Buttons */
+  .btn {
+    padding: 11px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.75; }
+  .btn-primary { background: var(--accent); color: #000; width: 100%; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warn { background: var(--warning); color: #000; }
 
-  /* MESSAGE BOX */
-  .msg-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; border: 0.5px solid var(--border); }
-  .msg-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px; }
-  .msg-text { font-size: 13px; line-height: 1.55; white-space: pre-wrap; color: var(--text); }
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-nieuw { background: #1a2a3a; color: #60aaff; }
+  .badge-besteld { background: #2a1a3a; color: #c060ff; }
+  .badge-betaald { background: #3a2a0a; color: var(--warning); }
+  .badge-verzonden { background: #0a2a1a; color: var(--accent); }
+  .badge-afgerond { background: #1a2a1a; color: #66cc66; }
 
-  /* EMPTY */
-  .empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
-  .empty i { font-size: 40px; display: block; margin-bottom: 12px; }
+  /* Order cards */
+  .order-name { font-weight: 700; font-size: 15px; }
+  .order-snap { font-size: 12px; color: var(--text-muted); }
+  .order-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .order-profit { font-weight: 800; color: var(--accent); font-size: 15px; }
+  .order-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
-  /* PRINT */
+  /* Search / filter */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .filter-bar input { flex: 1; }
+  .filter-bar select { flex: 0 0 auto; width: 130px; }
+
+  /* Label print */
   @media print {
-    body * { display: none !important; }
-    .print-area, .print-area * { display: block !important; }
-    .print-area { font-family: Arial, sans-serif; padding: 8mm; width: 148mm; }
-    .pl-to { font-size: 11pt; color: #555; margin-bottom: 4mm; }
-    .pl-name { font-size: 14pt; font-weight: bold; margin-bottom: 2mm; }
-    .pl-addr { font-size: 11pt; line-height: 1.6; margin-bottom: 6mm; }
-    .pl-bar { border: 1pt solid #aaa; height: 14mm; display: flex; align-items: center; justify-content: center; font-size: 28pt; letter-spacing: 3px; margin: 4mm 0; }
-    .pl-order { font-size: 9pt; color: #666; margin-top: 3mm; }
-    .pl-carrier { margin-top: 5mm; padding-top: 3mm; border-top: 1pt solid #000; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; color: #444; display: flex; justify-content: space-between; }
+    body * { visibility: hidden; }
+    #label-print, #label-print * { visibility: visible; }
+    #label-print {
+      position: fixed; top: 0; left: 0;
+      width: 105mm; min-height: 148mm;
+      padding: 8mm;
+      font-family: Arial, sans-serif;
+      font-size: 12pt;
+      color: #000;
+      background: #fff;
+    }
+  }
+
+  /* Charts */
+  .chart-wrap {
+    position: relative;
+    margin: 8px 0 20px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 16px 12px 8px;
+    overflow: hidden;
+  }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 120px;
+  }
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-pair {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: center;
+    flex: 1;
+  }
+  .bar {
+    width: 12px;
+    border-radius: 3px 3px 0 0;
+    min-height: 2px;
+    transition: height 0.3s ease;
+  }
+  .bar-omzet { background: #60aaff; }
+  .bar-winst { background: var(--accent); }
+  .bar-lbl { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px; }
+  .chart-legend { display: flex; gap: 14px; justify-content: center; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; color: var(--text-muted); font-size: 11px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* Top koper card */
+  .top-koper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-koper:last-child { border-bottom: none; }
+  .top-rank {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--border);
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .top-rank.gold { color: #f0c040; }
+  .top-rank.silver { color: #aab0c0; }
+  .top-rank.bronze { color: #c08060; }
+  .top-info { flex: 1; }
+  .top-name { font-weight: 700; font-size: 14px; }
+  .top-snap { font-size: 12px; color: var(--text-muted); }
+  .top-stats { text-align: right; }
+  .top-orders { font-weight: 800; font-size: 18px; color: var(--accent); }
+  .top-omzet { font-size: 11px; color: var(--text-muted); }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Sticky new order btn */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    font-size: 26px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,200,150,0.4);
+    z-index: 200;
+  }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    width: 100%;
+    max-width: 480px;
+    margin-top: 20px;
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 18px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .period-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .period-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .period-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+  .msg-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin-bottom: 8px;
   }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <span class="topbar-title"><i class="ti ti-shirt"></i> JerseyOrders</span>
-  <button class="btn btn-sm btn-primary" onclick="openSheet('new')"><i class="ti ti-plus"></i> Nieuw</button>
-</div>
-
-<div class="tabs">
-  <div class="tab active" onclick="showTab('orders')"><i class="ti ti-package"></i> Bestellingen</div>
-  <div class="tab" onclick="showTab('finance')"><i class="ti ti-chart-bar"></i> Financiën</div>
-</div>
-
-<div class="content">
-  <div id="tab-orders" class="section active">
-    <div class="filter-row" id="filterRow"></div>
-    <div id="orderList" style="padding:0 16px"></div>
+<header>
+  <h1>⚽ Shirt Orders</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('orders')">Bestellingen</button>
+    <button class="tab" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="tab" onclick="showPage('kopers')">Top Kopers</button>
   </div>
-  <div id="tab-finance" class="section">
-    <div id="financeView"></div>
+</header>
+
+<!-- BESTELLINGEN -->
+<div id="page-orders" class="page active">
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="val" id="stat-open">0</div>
+      <div class="lbl">Open</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-maand-omzet">€0</div>
+      <div class="lbl">Omzet maand</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-maand-winst">€0</div>
+      <div class="lbl">Winst maand</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" id="search-input" placeholder="Zoek naam / Snapchat..." oninput="renderOrders()">
+    <select id="filter-status" onchange="renderOrders()">
+      <option value="">Alle statussen</option>
+      <option value="Nieuw">Nieuw</option>
+      <option value="Besteld bij leverancier">Besteld</option>
+      <option value="Betaald">Betaald</option>
+      <option value="Verzonden">Verzonden</option>
+      <option value="Afgerond">Afgerond</option>
+    </select>
+  </div>
+
+  <div id="orders-list"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div class="period-toggle">
+    <button class="period-btn active" id="btn-week" onclick="setDashPeriod('week')">Per week</button>
+    <button class="period-btn" id="btn-month" onclick="setDashPeriod('month')">Per maand</button>
+  </div>
+
+  <div class="card">
+    <div class="section-title" id="dash-chart-title">Omzet & Winst — afgelopen weken</div>
+    <div class="chart-wrap">
+      <div class="chart-bars" id="dash-chart"></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#60aaff"></div>Omzet</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Winst</div>
+      </div>
+    </div>
+    <table class="data-table" id="dash-table">
+      <thead><tr><th>Periode</th><th>Orders</th><th>Omzet</th><th>Kosten</th><th>Winst</th></tr></thead>
+      <tbody id="dash-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="val" id="dash-total-orders">0</div>
+      <div class="lbl">Totaal orders</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="dash-total-omzet">€0</div>
+      <div class="lbl">Totaal omzet</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="dash-total-winst">€0</div>
+      <div class="lbl">Totaal winst</div>
+    </div>
   </div>
 </div>
 
-<button class="fab" onclick="openSheet('new')" aria-label="Nieuwe bestelling"><i class="ti ti-plus"></i></button>
-
-<div class="sheet-bg" id="sheetBg" onclick="closeBgClick(event)"></div>
-<div class="sheet" id="sheet">
-  <div class="sheet-handle"></div>
-  <div id="sheetContent"></div>
+<!-- TOP KOPERS -->
+<div id="page-kopers" class="page">
+  <div class="card" style="margin-bottom:16px; background: var(--surface2);">
+    <div style="font-size:12px; color:var(--text-muted); line-height:1.6;">
+      Herhaalkoper = zelfde naam + zelfde Snapchat, minimaal 2 bestellingen.
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">Top 10 Herhaalkopersers</div>
+    <div id="top-kopers-list"></div>
+  </div>
 </div>
 
-<div class="print-area" id="printArea" style="display:none"></div>
+<!-- FAB -->
+<button class="fab" onclick="openModal()">+</button>
+
+<!-- MODAL nieuw / bewerk order -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nieuwe bestelling</div>
+
+    <div class="form-group">
+      <label>Naam klant</label>
+      <input type="text" id="f-naam" placeholder="Bijv. Kevin de Bruyne">
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Snapchat</label>
+        <input type="text" id="f-snap" placeholder="@username">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp / Email</label>
+        <input type="text" id="f-contact" placeholder="optioneel">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Shirt / Product omschrijving</label>
+      <input type="text" id="f-product" placeholder="Bijv. Ajax thuis 24/25 maat L #10">
+    </div>
+    <div class="row2">
+      <div class="form-group">
+        <label>Verkoopprijs (€)</label>
+        <input type="number" id="f-omzet" step="0.01" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Inkoopkosten (€)</label>
+        <input type="number" id="f-kosten" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Afleveradres</label>
+      <textarea id="f-adres" placeholder="Straat, huisnr, postcode, stad"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="f-status">
+        <option>Nieuw</option>
+        <option>Besteld bij leverancier</option>
+        <option>Betaald</option>
+        <option>Verzonden</option>
+        <option>Afgerond</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Track & Trace</label>
+      <input type="text" id="f-tt" placeholder="PostNL code (optioneel)">
+    </div>
+    <div class="form-group">
+      <label>Notitie</label>
+      <textarea id="f-notitie" placeholder="Interne notitie..."></textarea>
+    </div>
+
+    <input type="hidden" id="f-id">
+    <div style="display:flex; gap:8px; margin-top:4px;">
+      <button class="btn btn-primary" onclick="saveOrder()">Opslaan</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<!-- LABEL PRINT -->
+<div id="label-print" style="display:none"></div>
+
+<!-- BERICHT MODAL -->
+<div class="modal-overlay" id="msg-modal" onclick="closeMsgModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="msg-modal-title">Klantbericht</div>
+    <div class="msg-box" id="msg-modal-body"></div>
+    <button class="btn btn-primary" onclick="copyMsg()">📋 Kopiëren</button>
+    <button class="btn btn-ghost" style="margin-top:8px; width:100%;" onclick="document.getElementById('msg-modal').classList.remove('open')">Sluiten</button>
+  </div>
+</div>
 
 <script>
-// ─── DATA ────────────────────────────────────────────
-let orders = JSON.parse(localStorage.getItem('jersey_orders') || '[]');
-let currentFilter = 'alle';
+// ─── DATA ───────────────────────────────────────────────
+let orders = JSON.parse(localStorage.getItem('shirt_orders') || '[]');
 let editId = null;
+let dashPeriod = 'week';
 
-function save() { localStorage.setItem('jersey_orders', JSON.stringify(orders)); }
-function genId() { return 'ORD-' + Date.now().toString(36).toUpperCase().slice(-5); }
-
-const STATUS_LABELS = { new: 'Nieuw', ordered: 'Besteld', paid: 'Betaald', shipped: 'Verzonden', done: 'Afgerond' };
-const STATUS_BADGES = { new: 'badge-new', ordered: 'badge-ordered', paid: 'badge-paid', shipped: 'badge-shipped', done: 'badge-done' };
-
-// ─── TABS ────────────────────────────────────────────
-function showTab(t) {
-  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['orders','finance'][i] === t));
-  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + t).classList.add('active');
-  if (t === 'finance') renderFinance();
+function save() {
+  localStorage.setItem('shirt_orders', JSON.stringify(orders));
 }
 
-// ─── RENDER ORDERS ───────────────────────────────────
-function renderFilters() {
-  const counts = { alle: orders.length };
-  orders.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
-  const chips = [
-    { k: 'alle', l: 'Alle' }, { k: 'new', l: 'Nieuw' }, { k: 'ordered', l: 'Besteld' },
-    { k: 'paid', l: 'Betaald' }, { k: 'shipped', l: 'Verzonden' }, { k: 'done', l: 'Afgerond' }
-  ];
-  document.getElementById('filterRow').innerHTML = chips
-    .map(c => `<button class="chip${currentFilter === c.k ? ' active' : ''}" onclick="setFilter('${c.k}')">${c.l}${counts[c.k] ? ' (' + counts[c.k] + ')' : ''}</button>`)
-    .join('');
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function setFilter(f) { currentFilter = f; renderFilters(); renderOrderList(); }
+// ─── PAGES ──────────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  event.target.classList.add('active');
+  if (p === 'dashboard') renderDashboard();
+  if (p === 'kopers') renderTopKopers();
+  if (p === 'orders') renderOrders();
+}
 
-function renderOrders() { renderFilters(); renderOrderList(); }
+// ─── ORDERS ─────────────────────────────────────────────
+function renderOrders() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const sf = document.getElementById('filter-status').value;
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
 
-function renderOrderList() {
-  const list = document.getElementById('orderList');
-  const filtered = orders
-    .filter(o => currentFilter === 'alle' || o.status === currentFilter)
-    .sort((a, b) => b.created - a.created);
+  let filtered = orders.filter(o => {
+    const matchQ = !q || o.naam.toLowerCase().includes(q) || (o.snap||'').toLowerCase().includes(q);
+    const matchS = !sf || o.status === sf;
+    return matchQ && matchS;
+  });
 
+  // Sort: newest first
+  filtered = [...filtered].sort((a,b) => b.ts - a.ts);
+
+  // Stats
+  const open = orders.filter(o => !['Afgerond'].includes(o.status)).length;
+  const thisMonthOrders = orders.filter(o => {
+    const d = new Date(o.ts);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  });
+  const maandOmzet = thisMonthOrders.reduce((s, o) => s + (o.omzet||0), 0);
+  const maandWinst = thisMonthOrders.reduce((s, o) => s + ((o.omzet||0) - (o.kosten||0)), 0);
+  document.getElementById('stat-open').textContent = open;
+  document.getElementById('stat-maand-omzet').textContent = '€' + maandOmzet.toFixed(0);
+  document.getElementById('stat-maand-winst').textContent = '€' + maandWinst.toFixed(0);
+
+  const list = document.getElementById('orders-list');
   if (!filtered.length) {
-    list.innerHTML = '<div class="empty"><i class="ti ti-package"></i>Geen bestellingen gevonden</div>';
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📦</div>Geen bestellingen gevonden.</div>`;
     return;
   }
 
   list.innerHTML = filtered.map(o => {
-    const w = (o.omzet || 0) - (o.kosten || 0);
-    return `<div class="card">
-      <div class="card-header">
+    const winst = (o.omzet||0) - (o.kosten||0);
+    const d = new Date(o.ts).toLocaleDateString('nl-NL', {day:'numeric',month:'short'});
+    return `
+    <div class="card">
+      <div class="card-row">
         <div>
-          <div class="order-num">${o.id}</div>
-          <div class="order-sub">${o.klant || '—'} · ${o.artikel || '—'}</div>
+          <div class="order-name">${esc(o.naam)}</div>
+          <div class="order-snap">${o.snap ? '@' + esc(o.snap) : '—'}</div>
+          <div class="order-meta">${esc(o.product||'—')} · ${d}</div>
         </div>
-        <span class="badge ${STATUS_BADGES[o.status]}">${STATUS_LABELS[o.status]}</span>
+        <div style="text-align:right">
+          <span class="badge badge-${statusKey(o.status)}">${esc(o.status)}</span>
+          <div class="order-profit" style="margin-top:6px;">+€${winst.toFixed(2)}</div>
+          <div style="font-size:11px;color:var(--text-muted);">€${(o.omzet||0).toFixed(2)} omzet</div>
+        </div>
       </div>
-      <div class="meta-row">
-        <span><i class="ti ti-calendar"></i> ${new Date(o.created).toLocaleDateString('nl-NL')}</span>
-        ${o.tracking ? `<span><i class="ti ti-truck"></i> ${o.tracking}</span>` : ''}
-        ${o.omzet ? `<span><i class="ti ti-coin-euro"></i> €${(+o.omzet).toFixed(2)}</span>` : ''}
-      </div>
-      ${(o.omzet || o.kosten) ? `
-      <div class="divider"></div>
-      <div class="fin-row"><span class="label">Omzet</span><span>€${(+o.omzet || 0).toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Kosten</span><span>€${(+o.kosten || 0).toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>` : ''}
-      <div class="action-row">
-        <button class="btn btn-sm" onclick="openSheet('view','${o.id}')"><i class="ti ti-eye"></i> Details</button>
-        <button class="btn btn-sm" onclick="openSheet('edit','${o.id}')"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-sm" onclick="printLabel('${o.id}')"><i class="ti ti-printer"></i> Label</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}')"><i class="ti ti-trash"></i></button>
+      ${o.notitie ? `<div style="font-size:12px;color:var(--text-muted);margin-top:8px;font-style:italic;">${esc(o.notitie)}</div>` : ''}
+      <div class="order-actions">
+        <button class="btn btn-sm btn-ghost" onclick="editOrder('${o.id}')">✏️ Bewerk</button>
+        <button class="btn btn-sm btn-ghost" onclick="showBericht('${o.id}')">💬 Bericht</button>
+        <button class="btn btn-sm btn-ghost" onclick="printLabel('${o.id}')">🖨️ Label</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}')">🗑️</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ─── FINANCE ─────────────────────────────────────────
-function renderFinance() {
-  const view = document.getElementById('financeView');
-  if (!orders.length) { view.innerHTML = '<div class="empty"><i class="ti ti-chart-bar"></i>Nog geen bestellingen</div>'; return; }
-
-  const byMonth = {};
-  orders.forEach(o => {
-    const d = new Date(o.created);
-    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (!byMonth[k]) byMonth[k] = { omzet: 0, kosten: 0, orders: 0 };
-    byMonth[k].omzet += (+o.omzet || 0);
-    byMonth[k].kosten += (+o.kosten || 0);
-    byMonth[k].orders++;
-  });
-
-  const tot = { omzet: orders.reduce((s, o) => s + (+o.omzet || 0), 0), kosten: orders.reduce((s, o) => s + (+o.kosten || 0), 0) };
-  const totW = tot.omzet - tot.kosten;
-
-  let html = `<div class="metric-grid">
-    <div class="metric"><div class="metric-label">Totale omzet</div><div class="metric-val">€${tot.omzet.toFixed(2)}</div></div>
-    <div class="metric"><div class="metric-label">Totale kosten</div><div class="metric-val">€${tot.kosten.toFixed(2)}</div></div>
-    <div class="metric"><div class="metric-label">Totale winst</div><div class="metric-val ${totW >= 0 ? 'green' : ''}">€${totW.toFixed(2)}</div></div>
-    <div class="metric"><div class="metric-label">Bestellingen</div><div class="metric-val">${orders.length}</div></div>
-  </div>`;
-
-  Object.keys(byMonth).sort().reverse().forEach(m => {
-    const data = byMonth[m];
-    const w = data.omzet - data.kosten;
-    const [yr, mo] = m.split('-');
-    const naam = new Date(+yr, +mo - 1, 1).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
-    html += `<div class="month-hdr">${naam}</div>
-    <div class="card">
-      <div class="fin-row"><span class="label">Omzet</span><span>€${data.omzet.toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Kosten</span><span>€${data.kosten.toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label" style="color:var(--text-3)">Bestellingen</span><span style="color:var(--text-3)">${data.orders}</span></div>
-    </div>`;
-  });
-
-  view.innerHTML = html;
+function statusKey(s) {
+  const map = { 'Nieuw':'nieuw','Besteld bij leverancier':'besteld','Betaald':'betaald','Verzonden':'verzonden','Afgerond':'afgerond' };
+  return map[s] || 'nieuw';
 }
 
-// ─── SHEET ───────────────────────────────────────────
-function openSheet(mode, id) {
-  editId = id || null;
-  const o = id ? orders.find(x => x.id === id) : null;
-  const content = document.getElementById('sheetContent');
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-  if (mode === 'new' || mode === 'edit') {
-    content.innerHTML = `
-    <div class="sheet-title">${mode === 'new' ? 'Nieuwe bestelling' : 'Bewerk ' + o.id}
-      <button class="btn btn-sm" onclick="closeSheet()"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="section-label">Klant & artikel</div>
-    <div class="field"><label>Klantnaam / Snapchat</label><input id="f-klant" value="${esc(o?.klant)}" placeholder="@snapchatnaam"></div>
-    <div class="field"><label>Artikel</label><input id="f-artikel" value="${esc(o?.artikel)}" placeholder="bijv. Real Madrid thuis jersey #7 maat L"></div>
-    <div class="field"><label>Extra info (kleur, maat, variatie)</label><textarea id="f-extra">${esc(o?.extra)}</textarea></div>
+// ─── MODAL ──────────────────────────────────────────────
+function openModal(id = null) {
+  editId = id;
+  document.getElementById('modal-title').textContent = id ? 'Bestelling bewerken' : 'Nieuwe bestelling';
+  const fields = ['naam','snap','contact','product','omzet','kosten','adres','status','tt','notitie','id'];
+  fields.forEach(f => document.getElementById('f-'+f).value = '');
+  document.getElementById('f-status').value = 'Nieuw';
 
-    <div class="section-label">Afleveradres</div>
-    <div class="field"><label>Naam ontvanger</label><input id="f-naam" value="${esc(o?.naam)}" placeholder="Volledige naam"></div>
-    <div class="field"><label>Straat + huisnummer</label><input id="f-straat" value="${esc(o?.straat)}" placeholder="Keizersgracht 123"></div>
-    <div class="row2">
-      <div class="field"><label>Postcode</label><input id="f-pc" value="${esc(o?.pc)}" placeholder="1234 AB"></div>
-      <div class="field"><label>Stad</label><input id="f-stad" value="${esc(o?.stad)}" placeholder="Amsterdam"></div>
-    </div>
-    <div class="field"><label>Land</label><input id="f-land" value="${esc(o?.land) || 'Nederland'}" placeholder="Nederland"></div>
-
-    <div class="section-label">Financiën</div>
-    <div class="row2">
-      <div class="field"><label>Omzet (€)</label><input id="f-omzet" type="number" step="0.01" inputmode="decimal" value="${o?.omzet || ''}" placeholder="0.00"></div>
-      <div class="field"><label>Kosten (€)</label><input id="f-kosten" type="number" step="0.01" inputmode="decimal" value="${o?.kosten || ''}" placeholder="0.00"></div>
-    </div>
-
-    <div class="section-label">Status & tracking</div>
-    <div class="field"><label>Status</label>
-      <select id="f-status">
-        ${['new','ordered','paid','shipped','done'].map(s =>
-          `<option value="${s}"${(o?.status || 'new') === s ? ' selected' : ''}>${STATUS_LABELS[s]}</option>`
-        ).join('')}
-      </select>
-    </div>
-    <div class="field"><label>Ordernummer leverancier</label><input id="f-ordnr" value="${esc(o?.ordnr)}" placeholder="Referentie van de leverancier"></div>
-    <div class="field"><label>Trackingnummer PostNL</label><input id="f-tracking" value="${esc(o?.tracking)}" placeholder="3SXXXXX..."></div>
-    <div class="field"><label>Notitie</label><textarea id="f-note">${esc(o?.note)}</textarea></div>
-
-    <button class="btn btn-primary btn-block" onclick="saveOrder()">
-      <i class="ti ti-check"></i> ${mode === 'new' ? 'Bestelling aanmaken' : 'Wijzigingen opslaan'}
-    </button>`;
-
-  } else if (mode === 'view') {
-    const w = (o.omzet || 0) - (o.kosten || 0);
-    const msgs = buildMessages(o);
-    content.innerHTML = `
-    <div class="sheet-title">${o.id}
-      <button class="btn btn-sm" onclick="closeSheet()"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="fin-row"><span class="label">Klant</span><span>${esc(o.klant) || '—'}</span></div>
-      <div class="fin-row"><span class="label">Artikel</span><span style="text-align:right;max-width:55%">${esc(o.artikel) || '—'}</span></div>
-      ${o.extra ? `<div class="fin-row"><span class="label">Info</span><span style="text-align:right;max-width:55%">${esc(o.extra)}</span></div>` : ''}
-      <div class="divider"></div>
-      <div class="fin-row"><span class="label">Ontvanger</span><span>${esc(o.naam) || '—'}</span></div>
-      <div class="fin-row"><span class="label">Adres</span><span style="text-align:right;max-width:55%;font-size:12px">${[o.straat, o.pc, o.stad, o.land].filter(Boolean).join(', ') || '—'}</span></div>
-      <div class="divider"></div>
-      <div class="fin-row"><span class="label">Status</span><span><span class="badge ${STATUS_BADGES[o.status]}">${STATUS_LABELS[o.status]}</span></span></div>
-      ${o.ordnr ? `<div class="fin-row"><span class="label">Ordernr. leverancier</span><span>${esc(o.ordnr)}</span></div>` : ''}
-      ${o.tracking ? `<div class="fin-row"><span class="label">Tracking PostNL</span><span>${esc(o.tracking)}</span></div>` : ''}
-      <div class="divider"></div>
-      <div class="fin-row"><span class="label">Omzet</span><span>€${(+o.omzet || 0).toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Kosten</span><span>€${(+o.kosten || 0).toFixed(2)}</span></div>
-      <div class="fin-row"><span class="label">Winst</span><span class="${w >= 0 ? 'profit-pos' : 'profit-neg'}">€${w.toFixed(2)}</span></div>
-    </div>
-
-    <div class="section-label">Klantberichten — tik om te kopiëren</div>
-    ${msgs.map(m => `
-    <div class="msg-box" onclick="copyMsg('${btoa(encodeURIComponent(m.text))}', this)">
-      <div class="msg-label">${m.label}</div>
-      <div class="msg-text">${esc(m.text)}</div>
-      <div style="margin-top:8px;font-size:12px;color:var(--green)"><i class="ti ti-copy"></i> Tik om te kopiëren</div>
-    </div>`).join('')}
-
-    <div class="action-row" style="margin-top:4px">
-      <button class="btn btn-sm" onclick="openSheet('edit','${o.id}')"><i class="ti ti-edit"></i> Bewerken</button>
-      <button class="btn btn-sm" onclick="printLabel('${o.id}')"><i class="ti ti-printer"></i> Label</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteOrder('${o.id}');closeSheet()"><i class="ti ti-trash"></i></button>
-    </div>`;
+  if (id) {
+    const o = orders.find(x => x.id === id);
+    if (o) {
+      document.getElementById('f-naam').value = o.naam || '';
+      document.getElementById('f-snap').value = o.snap || '';
+      document.getElementById('f-contact').value = o.contact || '';
+      document.getElementById('f-product').value = o.product || '';
+      document.getElementById('f-omzet').value = o.omzet || '';
+      document.getElementById('f-kosten').value = o.kosten || '';
+      document.getElementById('f-adres').value = o.adres || '';
+      document.getElementById('f-status').value = o.status || 'Nieuw';
+      document.getElementById('f-tt').value = o.tt || '';
+      document.getElementById('f-notitie').value = o.notitie || '';
+      document.getElementById('f-id').value = o.id;
+    }
   }
-
-  document.getElementById('sheetBg').classList.add('open');
-  setTimeout(() => document.getElementById('sheet').classList.add('open'), 10);
+  document.getElementById('modal-overlay').classList.add('open');
 }
 
-function closeSheet() {
-  document.getElementById('sheet').classList.remove('open');
-  document.getElementById('sheetBg').classList.remove('open');
-}
-function closeBgClick(e) { if (e.target === document.getElementById('sheetBg')) closeSheet(); }
-
-// ─── MESSAGES ────────────────────────────────────────
-function buildMessages(o) {
-  const msgs = [];
-  msgs.push({ label: '✅ Bevestiging bestelling', text: `Hé ${o.klant || ''}!\n\nJe bestelling is ontvangen 🎉\nArtikel: ${o.artikel || '—'}\nOrdernummer: ${o.id}\n\nIk ga dit zo snel mogelijk voor je regelen. Ik laat je weten zodra het onderweg is!` });
-  if (o.ordnr) msgs.push({ label: '📦 Besteld bij leverancier', text: `Hé ${o.klant || ''}!\n\nJe ${o.artikel || 'bestelling'} is besteld bij de leverancier (ref: ${o.ordnr}). Zodra ik het trackingnummer heb stuur ik je door!` });
-  msgs.push({ label: '💸 Betaalverzoek', text: `Hé ${o.klant || ''}!\n\nKun je €${(+o.omzet || 0).toFixed(2)} overmaken? Dan zorg ik dat je bestelling zo snel mogelijk verstuurd wordt. Bedankt! 🙏` });
-  if (o.tracking) msgs.push({ label: '🚀 Verzonden met tracking', text: `Hé ${o.klant || ''}!\n\nJe pakketje is onderweg! 📦\nTrackingnummer: ${o.tracking}\nVolg je pakket: https://postnl.nl/tracktrace/?B=${o.tracking}&P=${(o.pc || '').replace(' ', '')}\n\nVragen? Stuur me een berichtje!` });
-  msgs.push({ label: '⭐ Afgeleverd — vraag om review', text: `Hé ${o.klant || ''}!\n\nJe pakket is bezorgd! Hoop dat je blij bent met je ${o.artikel || 'bestelling'} 🙌 Als je vrienden zoekt voor dezelfde kwaliteit, stuur ze gerust mijn kant op. Thanks!` });
-  return msgs;
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
 }
 
-function copyMsg(b64, el) {
-  const text = decodeURIComponent(atob(b64));
-  navigator.clipboard.writeText(text).catch(() => {});
-  const btn = el.querySelector('div:last-child');
-  btn.innerHTML = '<i class="ti ti-check"></i> Gekopieerd!';
-  btn.style.color = 'var(--green)';
-  setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Tik om te kopiëren'; }, 1800);
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
-// ─── SAVE / DELETE ───────────────────────────────────
 function saveOrder() {
-  const g = id => document.getElementById(id)?.value || '';
+  const naam = document.getElementById('f-naam').value.trim();
+  if (!naam) { alert('Naam is verplicht.'); return; }
+
   const o = {
-    id: editId ? orders.find(x => x.id === editId).id : genId(),
-    created: editId ? orders.find(x => x.id === editId).created : Date.now(),
-    klant: g('f-klant'), artikel: g('f-artikel'), extra: g('f-extra'),
-    naam: g('f-naam'), straat: g('f-straat'), pc: g('f-pc'), stad: g('f-stad'), land: g('f-land'),
-    omzet: parseFloat(g('f-omzet')) || 0, kosten: parseFloat(g('f-kosten')) || 0,
-    status: g('f-status'), ordnr: g('f-ordnr'), tracking: g('f-tracking'), note: g('f-note')
+    id: document.getElementById('f-id').value || genId(),
+    naam,
+    snap: document.getElementById('f-snap').value.trim().replace(/^@/,''),
+    contact: document.getElementById('f-contact').value.trim(),
+    product: document.getElementById('f-product').value.trim(),
+    omzet: parseFloat(document.getElementById('f-omzet').value) || 0,
+    kosten: parseFloat(document.getElementById('f-kosten').value) || 0,
+    adres: document.getElementById('f-adres').value.trim(),
+    status: document.getElementById('f-status').value,
+    tt: document.getElementById('f-tt').value.trim(),
+    notitie: document.getElementById('f-notitie').value.trim(),
+    ts: editId ? (orders.find(x=>x.id===document.getElementById('f-id').value)||{}).ts || Date.now() : Date.now()
   };
-  if (editId) { const i = orders.findIndex(x => x.id === editId); orders[i] = o; }
-  else orders.unshift(o);
-  save(); renderOrders(); closeSheet();
+
+  if (editId || document.getElementById('f-id').value) {
+    const idx = orders.findIndex(x => x.id === o.id);
+    if (idx >= 0) orders[idx] = o; else orders.unshift(o);
+  } else {
+    orders.unshift(o);
+  }
+  save();
+  closeModal();
+  renderOrders();
 }
+
+function editOrder(id) { openModal(id); }
 
 function deleteOrder(id) {
   if (!confirm('Bestelling verwijderen?')) return;
   orders = orders.filter(o => o.id !== id);
-  save(); renderOrders();
+  save();
+  renderOrders();
 }
 
-// ─── PRINT LABEL ─────────────────────────────────────
+// ─── BERICHTEN ──────────────────────────────────────────
+function showBericht(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const winst = (o.omzet||0) - (o.kosten||0);
+  let msg = '';
+  if (o.status === 'Nieuw' || o.status === 'Besteld bij leverancier') {
+    msg = `Hey ${o.naam}! ✅ Ik heb je bestelling ontvangen: ${o.product||'je shirt'}. Ik bestel dit bij mijn leverancier. Levertijd is ongeveer 2-3 weken. Kosten: €${(o.omzet||0).toFixed(2)}. Ik laat je weten zodra het onderweg is! 🙌`;
+  } else if (o.status === 'Betaald') {
+    msg = `Hey ${o.naam}! 💸 Betaling ontvangen, bedankt! Je shirt ${o.product||''} is betaald en wordt zo snel mogelijk verstuurd. Ik stuur je een Track & Trace zodra het verzonden is!`;
+  } else if (o.status === 'Verzonden') {
+    msg = `Hey ${o.naam}! 📦 Je bestelling is onderweg!\n\nProduct: ${o.product||'je shirt'}\nTrack & Trace: ${o.tt || '(volgt)'}\n\nVia PostNL te volgen op postnl.nl. Meestal 1-2 werkdagen. Laat me weten als je vragen hebt! ⚽`;
+  } else if (o.status === 'Afgerond') {
+    msg = `Hey ${o.naam}! 🎉 Hopelijk ben je blij met je ${o.product||'shirt'}! Mocht je nog shirts willen, laat het weten. Bedankt voor je bestelling! 🙏⚽`;
+  }
+  document.getElementById('msg-modal-title').textContent = `Bericht voor ${o.naam}`;
+  document.getElementById('msg-modal-body').textContent = msg;
+  document.getElementById('msg-modal').classList.add('open');
+}
+
+function closeMsgModal(e) {
+  if (e.target === document.getElementById('msg-modal')) document.getElementById('msg-modal').classList.remove('open');
+}
+
+function copyMsg() {
+  const txt = document.getElementById('msg-modal-body').textContent;
+  navigator.clipboard.writeText(txt).then(() => alert('Gekopieerd!'));
+}
+
+// ─── LABEL PRINT ────────────────────────────────────────
 function printLabel(id) {
   const o = orders.find(x => x.id === id);
   if (!o) return;
-  const pa = document.getElementById('printArea');
-  pa.style.display = 'block';
-  pa.innerHTML = `
-    <div class="pl-to">Aan:</div>
-    <div class="pl-name">${o.naam || '—'}</div>
-    <div class="pl-addr">${o.straat || ''}<br>${o.pc || ''} ${o.stad || ''}<br>${o.land || 'Nederland'}</div>
-    <div class="pl-bar">| | | | | | | | | | | | | |</div>
-    <div class="pl-order">Bestelnummer: ${o.id}${o.tracking ? ' · ' + o.tracking : ''}</div>
-    <div class="pl-carrier"><span>PostNL — Standaard pakket</span><span>${new Date().toLocaleDateString('nl-NL')}</span></div>`;
+  const lbl = document.getElementById('label-print');
+  lbl.style.display = 'block';
+  lbl.innerHTML = `
+    <div style="font-size:11pt;font-family:Arial,sans-serif;color:#000;">
+      <div style="font-size:9pt;color:#555;margin-bottom:4px;">VAN: Shirt Orders NL</div>
+      <hr style="margin:6px 0;">
+      <div style="font-size:12pt;font-weight:bold;margin-bottom:6px;">NAAR:</div>
+      <div style="font-size:13pt;font-weight:bold;">${o.naam}</div>
+      <div style="white-space:pre-wrap;font-size:11pt;margin-top:4px;">${o.adres||'—'}</div>
+      <hr style="margin:10px 0;">
+      <div style="font-size:9pt;color:#555;">Product: ${o.product||'—'}</div>
+      ${o.tt ? `<div style="font-size:9pt;color:#555;">T&T: ${o.tt}</div>` : ''}
+      <div style="font-size:9pt;color:#555;">Ref: #${o.id.slice(-6).toUpperCase()}</div>
+    </div>`;
   window.print();
-  pa.style.display = 'none';
+  setTimeout(() => { lbl.style.display = 'none'; }, 1000);
 }
 
-// ─── UTILS ───────────────────────────────────────────
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ─── DASHBOARD ──────────────────────────────────────────
+function setDashPeriod(p) {
+  dashPeriod = p;
+  document.getElementById('btn-week').classList.toggle('active', p === 'week');
+  document.getElementById('btn-month').classList.toggle('active', p === 'month');
+  renderDashboard();
 }
 
-// ─── SERVICE WORKER ──────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(console.error);
+function getWeekKey(ts) {
+  const d = new Date(ts);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
 }
 
-// ─── INIT ────────────────────────────────────────────
+function getMonthKey(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getMonthLabel(key) {
+  const [y, m] = key.split('-');
+  const d = new Date(y, m-1, 1);
+  return d.toLocaleDateString('nl-NL',{month:'short',year:'2-digit'});
+}
+
+function renderDashboard() {
+  const grouped = {};
+  orders.forEach(o => {
+    const key = dashPeriod === 'week' ? getWeekKey(o.ts) : getMonthKey(o.ts);
+    if (!grouped[key]) grouped[key] = { orders: 0, omzet: 0, kosten: 0 };
+    grouped[key].orders++;
+    grouped[key].omzet += o.omzet || 0;
+    grouped[key].kosten += o.kosten || 0;
+  });
+
+  // Last N periods
+  const n = dashPeriod === 'week' ? 8 : 6;
+  const allKeys = Object.keys(grouped).sort();
+  const keys = allKeys.slice(-n);
+
+  // Chart
+  const maxVal = Math.max(...keys.map(k => grouped[k].omzet), 1);
+  document.getElementById('dash-chart-title').textContent =
+    dashPeriod === 'week' ? 'Omzet & Winst — afgelopen weken' : 'Omzet & Winst — afgelopen maanden';
+
+  if (!keys.length) {
+    document.getElementById('dash-chart').innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;">Nog geen data</div>';
+    document.getElementById('dash-tbody').innerHTML = '';
+    ['dash-total-orders','dash-total-omzet','dash-total-winst'].forEach(id => document.getElementById(id).textContent = id.includes('orders') ? 0 : '€0');
+    return;
+  }
+
+  document.getElementById('dash-chart').innerHTML = keys.map(k => {
+    const d = grouped[k];
+    const winst = d.omzet - d.kosten;
+    const hOmzet = Math.max(4, Math.round((d.omzet / maxVal) * 100));
+    const hWinst = Math.max(4, Math.round((Math.max(0, winst) / maxVal) * 100));
+    const lbl = dashPeriod === 'week' ? k.split('-W')[1] : getMonthLabel(k);
+    return `
+      <div class="bar-group">
+        <div class="bar-pair">
+          <div class="bar bar-omzet" style="height:${hOmzet}px" title="Omzet €${d.omzet.toFixed(2)}"></div>
+          <div class="bar bar-winst" style="height:${hWinst}px" title="Winst €${winst.toFixed(2)}"></div>
+        </div>
+        <div class="bar-lbl">${lbl}</div>
+      </div>`;
+  }).join('');
+
+  // Table
+  document.getElementById('dash-tbody').innerHTML = keys.slice().reverse().map(k => {
+    const d = grouped[k];
+    const winst = d.omzet - d.kosten;
+    const lbl = dashPeriod === 'week' ? `Week ${k.split('-W')[1]} ${k.split('-')[0]}` : getMonthLabel(k);
+    return `<tr>
+      <td>${lbl}</td>
+      <td>${d.orders}</td>
+      <td>€${d.omzet.toFixed(2)}</td>
+      <td>€${d.kosten.toFixed(2)}</td>
+      <td style="color:var(--accent);font-weight:700;">€${winst.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals
+  const totO = orders.length;
+  const totOmzet = orders.reduce((s,o) => s + (o.omzet||0), 0);
+  const totWinst = orders.reduce((s,o) => s + ((o.omzet||0)-(o.kosten||0)), 0);
+  document.getElementById('dash-total-orders').textContent = totO;
+  document.getElementById('dash-total-omzet').textContent = '€' + totOmzet.toFixed(0);
+  document.getElementById('dash-total-winst').textContent = '€' + totWinst.toFixed(0);
+}
+
+// ─── TOP KOPERS ─────────────────────────────────────────
+function renderTopKopers() {
+  // Group by naam + snap (lowercase)
+  const groups = {};
+  orders.forEach(o => {
+    const naam = (o.naam||'').trim().toLowerCase();
+    const snap = (o.snap||'').trim().toLowerCase();
+    const key = naam + '|||' + snap;
+    if (!groups[key]) groups[key] = { naam: o.naam, snap: o.snap, count: 0, omzet: 0, winst: 0, last: 0 };
+    groups[key].count++;
+    groups[key].omzet += o.omzet || 0;
+    groups[key].winst += (o.omzet||0) - (o.kosten||0);
+    if (o.ts > groups[key].last) groups[key].last = o.ts;
+  });
+
+  const herhalers = Object.values(groups)
+    .filter(g => g.count >= 2)
+    .sort((a,b) => b.count - a.count || b.omzet - a.omzet)
+    .slice(0, 10);
+
+  const list = document.getElementById('top-kopers-list');
+  if (!herhalers.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div>Nog geen herhaalkopersers (minimaal 2 bestellingen).</div>`;
+    return;
+  }
+
+  list.innerHTML = herhalers.map((g, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const lastDate = new Date(g.last).toLocaleDateString('nl-NL', {day:'numeric',month:'short'});
+    return `
+    <div class="top-koper">
+      <div class="top-rank ${rankClass}">${rank}</div>
+      <div class="top-info">
+        <div class="top-name">${esc(g.naam)}</div>
+        <div class="top-snap">${g.snap ? '@' + esc(g.snap) : '—'} · laatste: ${lastDate}</div>
+      </div>
+      <div class="top-stats">
+        <div class="top-orders">${g.count}x</div>
+        <div class="top-omzet">€${g.omzet.toFixed(0)} omzet</div>
+        <div class="top-omzet" style="color:var(--accent);">€${g.winst.toFixed(0)} winst</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── INIT ────────────────────────────────────────────────
 renderOrders();
 </script>
 </body>
